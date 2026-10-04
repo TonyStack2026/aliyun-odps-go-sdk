@@ -75,13 +75,7 @@ func (s Struct) String() string {
 		sb.WriteString(field.Name)
 		sb.WriteString(":")
 
-		// A NULL field is legal in a struct, render it instead of
-		// dereferencing a nil Data.
-		if field.Value == nil {
-			sb.WriteString("NULL")
-		} else {
-			sb.WriteString(field.Value.String())
-		}
+		sb.WriteString(diagnosticValue(field.Value))
 
 		if i < n {
 			sb.WriteString(",")

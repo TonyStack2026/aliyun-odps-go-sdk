@@ -60,13 +60,7 @@ func (a Array) String() string {
 	sb.WriteString("array(")
 
 	for i, d := range a.data {
-		// A NULL element is legal in an array, render it instead of
-		// dereferencing a nil Data.
-		if d == nil {
-			sb.WriteString("NULL")
-		} else {
-			sb.WriteString(d.String())
-		}
+		sb.WriteString(diagnosticValue(d))
 
 		if i+1 < n {
 			sb.WriteString(", ")
