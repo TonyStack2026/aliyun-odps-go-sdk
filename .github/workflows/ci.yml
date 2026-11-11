@@ -19,7 +19,10 @@ env:
 
 jobs:
 
-  # 编译与离线单测：不取任何凭据，任何环境（包括 fork 的 PR）都必须真跑。
+  # 编译与离线单测：不取任何凭据，也不设 ODPS_RUN_LIVE_TESTS，任何环境（包括
+  # fork 的 PR）都必须真跑。internal/livetest 要求显式 opt-in，所以就算某个
+  # runner 恰好导出了 ALIBABA_CLOUD_* / odps_endpoint，需要真实项目的用例也只是
+  # SKIP，不会去动服务。
   build:
     runs-on: ubuntu-latest
     steps:
@@ -42,6 +45,12 @@ jobs:
     name: Live-service test (needs OIDC credentials)
     needs: build
     runs-on: ubuntu-latest
+    # 只有这一档声明「我要跑真实项目的用例」：internal/livetest 要 ODPS_RUN_LIVE_TESTS=1
+    # 且配置完整（ID/Secret 非空、endpoint 是带主机的 http(s)、给了 token 就不能为空）
+    # 才放行；项目名在这里显式写出来，不靠代码里的默认值。
+    env:
+      ODPS_RUN_LIVE_TESTS: '1'
+      ODPS_LIVE_TEST_PROJECT: go_sdk_regression_testing
     permissions:
       id-token: write     # 获取 oidc token 的权限
     steps:
