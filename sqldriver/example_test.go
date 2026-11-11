@@ -18,6 +18,7 @@ package sqldriver_test
 
 import (
 	"database/sql"
+	"github.com/aliyun/aliyun-odps-go-sdk/internal/livetest"
 	"log"
 	"time"
 
@@ -56,7 +57,7 @@ func Example() {
 		errMsg := "unknown account type: %s" + account.GetType().String()
 		panic(errMsg)
 	}
-	config.ProjectName = "go_sdk_regression_testing"
+	config.ProjectName = livetest.ProjectOrDefault()
 
 	dsn := config.FormatDsn()
 	db, err := sql.Open("odps", dsn)
@@ -118,7 +119,7 @@ func ExampleStructField() {
 	} else {
 		log.Fatalf("unknown account type: %s", account.GetType())
 	}
-	config.ProjectName = "go_sdk_regression_testing"
+	config.ProjectName = livetest.ProjectOrDefault()
 
 	dsn := config.FormatDsn()
 	db, err := sql.Open("odps", dsn)
@@ -168,7 +169,7 @@ func ExampleInsert() {
 	} else {
 		log.Fatalf("unknown account type: %s", account.GetType())
 	}
-	config.ProjectName = "go_sdk_regression_testing"
+	config.ProjectName = livetest.ProjectOrDefault()
 
 	dsn := config.FormatDsn()
 	db, err := sql.Open("odps", dsn)
@@ -231,7 +232,7 @@ func ExampleCreateTable() {
 	} else {
 		log.Fatalf("unknown account type: %s", account.GetType())
 	}
-	config.ProjectName = "go_sdk_regression_testing"
+	config.ProjectName = livetest.ProjectOrDefault()
 
 	dsn := config.FormatDsn()
 	db, err := sql.Open("odps", dsn)

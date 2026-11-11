@@ -68,13 +68,13 @@ func ExampleTableSchema_ToSQLString() {
 
 	schema := builder.Build()
 
-	sql, _ := schema.ToSQLString("go_sdk_regression_testing", "schema", true)
+	sql, _ := schema.ToSQLString(defaultProjectName, "schema", true)
 	println("sql of create table:")
 	println(sql)
 	println()
 
 	externalSql, err := schema.ToExternalSQLString(
-		"go_sdk_regression_testing",
+		defaultProjectName,
 		"",
 		true,
 		serdeProperties,
@@ -143,7 +143,7 @@ func ExampleTable_ExecSql() {
 	if !liveServiceConfigured() {
 		return
 	}
-	// table := odps.NewTable(odpsIns, "go_sdk_regression_testing", "sale_detail")
+	// table := odps.NewTable(odpsIns, defaultProjectName, "sale_detail")
 	table := odpsIns.Table("has_struct")
 	// instance, err := table.ExecSql("SelectSale_detail", "select * from sale_detail;")
 	instance, err := table.ExecSql("Select_has_struct", "select * from has_struct;")
@@ -188,7 +188,7 @@ func ExampleTable_GetClusterInfo() {
 		ClusterSortColumns(cluster.SortCols).
 		ClusterBucketNum(cluster.BucketNum).
 		Build()
-	println(schema.ToSQLString("go_sdk_regression_testing", "default", true))
+	println(schema.ToSQLString(defaultProjectName, "default", true))
 	err := odpsIns.Tables().Create(schema, true, nil, nil)
 	if err != nil {
 		log.Fatalf("%+v", err)
@@ -216,7 +216,7 @@ func ExampleTable_GetPrimaryKey() {
 		Column(tableschema.Column{Name: "name", Type: datatype.StringType, NotNull: true}).
 		Column(tableschema.Column{Name: "name2", Type: datatype.StringType, NotNull: false}).
 		Build()
-	println(schema.ToSQLString("go_sdk_regression_testing", "default", true))
+	println(schema.ToSQLString(defaultProjectName, "default", true))
 	err := odpsIns.Tables().Create(schema, true, nil, nil)
 	if err != nil {
 		log.Fatalf("%+v", err)
@@ -243,7 +243,7 @@ func ExampleTable_IsTransactional() {
 		Column(tableschema.Column{Name: "name2", Type: datatype.StringType, NotNull: false}).
 		TblProperties(map[string]string{"transactional": "true"}).
 		Build()
-	println(schema.ToSQLString("go_sdk_regression_testing", "default", true))
+	println(schema.ToSQLString(defaultProjectName, "default", true))
 	err := odpsIns.Tables().Create(schema, true, nil, nil)
 	if err != nil {
 		log.Fatalf("%+v", err)

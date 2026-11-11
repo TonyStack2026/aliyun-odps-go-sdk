@@ -46,6 +46,8 @@ import (
 func realServiceSetup(t *testing.T) (endpoint, project string, cred credentials.Credential) {
 	t.Helper()
 
+	skipWithoutLiveService(t)
+
 	endpoint = os.Getenv("odps_endpoint")
 	project = os.Getenv("MAXCOMPUTE_PROJECT")
 	if endpoint == "" || project == "" ||

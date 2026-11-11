@@ -40,6 +40,11 @@ import (
 func realServiceConfig(t *testing.T) *odps.Config {
 	t.Helper()
 
+	// The gate is the shared one in live_service_test.go; MAXCOMPUTE_PROJECT
+	// stays required below so the project is named explicitly by whoever asks
+	// for a live run.
+	skipWithoutLiveService(t)
+
 	endpoint := os.Getenv("odps_endpoint")
 	accessId := os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_ID")
 	accessKey := os.Getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET")

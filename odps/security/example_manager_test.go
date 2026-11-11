@@ -18,6 +18,7 @@ package security_test
 
 import (
 	"fmt"
+	"github.com/aliyun/aliyun-odps-go-sdk/internal/livetest"
 	"log"
 
 	account2 "github.com/aliyun/aliyun-odps-go-sdk/odps/account"
@@ -29,7 +30,7 @@ var (
 	account     = account2.AccountFromEnv()
 	endpoint    = restclient.LoadEndpointFromEnv()
 	restClient  = restclient.NewOdpsRestClient(account, endpoint)
-	projectName = "go_sdk_regression_testing"
+	projectName = livetest.ProjectOrDefault()
 )
 
 func ExampleManager_GetSecurityConfig() {

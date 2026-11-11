@@ -1,34 +1,54 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package odps_test
 
 import (
 	"testing"
 
-	account2 "github.com/aliyun/aliyun-odps-go-sdk/odps/account"
-	"github.com/aliyun/aliyun-odps-go-sdk/odps/restclient"
+	"github.com/aliyun/aliyun-odps-go-sdk/internal/livetest"
 )
 
-// liveServiceConfigured reports whether the environment has an account
-// (ALIBABA_CLOUD_ACCESS_KEY_ID / ALIBABA_CLOUD_ACCESS_KEY_SECRET, plus
-// ALIBABA_CLOUD_SECURITY_TOKEN for STS) and an odps_endpoint. The examples in
-// this package are driven against a real MaxCompute project and need both.
+// liveServiceConfigured is this package's gate for cases that need a real
+// MaxCompute project. It is not "the environment happens to have credentials":
+// see internal/livetest - a live run has to be asked for with
+// ODPS_RUN_LIVE_TESTS=1 and the configuration has to be complete (non-empty
+// ID and secret, an absolute http(s) endpoint, a non-empty token when one is
+// supplied at all). Ordinary offline tests therefore stay offline on a machine
+// that has credentials exported for something else.
 //
-// Without credentials the request signing dereferences a nil account and
-// panics, and a panic aborts the test binary, which would take the offline
-// contract tests in this package down with it. So the live-service cases state
-// that they need a service and stop instead of running:
+// The cases use it in two shapes:
 //
 //   - a test calls skipWithoutLiveService(t) and shows up as SKIP;
 //   - an example has no *testing.T to skip with, so it returns before touching
 //     the service. Its "// Output:" block expects no output, which still matches.
 //
-// With credentials configured, every one of these runs exactly as before.
+// When it does return true, nothing about the case changes - that is what the
+// live-service CI job sets the opt-in for.
 func liveServiceConfigured() bool {
-	return account2.AccountFromEnv() != nil && restclient.LoadEndpointFromEnv() != ""
+	// ensureLiveFixtures creates the tables and the schema the examples in this
+	// package read. It runs here, once, and only for a opted-in complete
+	// configuration - never from a package init(), which would do it before any
+	// test had been selected (not even `go test -run '^$'` escapes that).
+	return livetest.Ready(ensureLiveFixtures)
 }
 
 func skipWithoutLiveService(t *testing.T) {
 	t.Helper()
 	if !liveServiceConfigured() {
-		t.Skip("needs a live MaxCompute project: set ALIBABA_CLOUD_ACCESS_KEY_ID, ALIBABA_CLOUD_ACCESS_KEY_SECRET and odps_endpoint")
+		t.Skip("not running against a live MaxCompute project: " + livetest.Reason())
 	}
 }

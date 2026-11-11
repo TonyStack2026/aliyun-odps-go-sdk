@@ -1,6 +1,7 @@
 package account_test
 
 import (
+	"github.com/aliyun/aliyun-odps-go-sdk/internal/livetest"
 	"net/http"
 	"os"
 	"strings"
@@ -42,7 +43,7 @@ func TestSignatureV4(t *testing.T) {
 	endpoint := restclient.LoadEndpointFromEnv()
 	aliyunAccount := account.NewStsAccount(ak, sk, stsToken, "cn-shanghai")
 	odpsIns := odps.NewOdps(aliyunAccount, endpoint)
-	odpsIns.SetDefaultProjectName("go_sdk_regression_testing")
+	odpsIns.SetDefaultProjectName(livetest.ProjectOrDefault())
 
 	err := odpsIns.DefaultProject().Load()
 	if err != nil {
