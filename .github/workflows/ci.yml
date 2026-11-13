@@ -71,6 +71,17 @@ jobs:
           grep -n '\[no tests to run\]' "$LOG" | head -5
           exit 1
         fi
+        # 下限只能抓住"大面积消失"：11-14 实测 12 个包各贡献 0 到 84 行 PASS，
+        # floor 300 要一次少 42 行以上才咬，单个小包从结果里不见是漏的。
+        # 所以把"该报的包都报了吗"直接对出来：go list 选中的集合必须等于报告里的集合。
+        expected=$(go list ./... | grep -v './arrow' | sort)
+        reported=$(grep -oE '^(ok|\?)[[:space:]]+[^[:space:]]+' "$LOG" | awk '{print $2}' | sort)
+        if [ "$expected" != "$reported" ]; then
+          echo "::error::the packages that reported are not the packages go list selected"
+          diff <(printf '%s\n' "$expected") <(printf '%s\n' "$reported") || true
+          exit 1
+        fi
+        echo "package set matches go list: $(printf '%s\n' "$expected" | grep -c .) packages"
         passed=$(grep -cE '^[[:space:]]*--- PASS' "$LOG")
         skipped=$(grep -cE '^[[:space:]]*--- SKIP' "$LOG")
         echo "executed cases (--- PASS lines): $passed (floor $MIN); skipped: $skipped"
