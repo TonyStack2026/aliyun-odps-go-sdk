@@ -36,8 +36,48 @@ jobs:
     - name: Build
       run: go build -v ./...
 
+    # tee 会把管道退出码变成 tee 自己的，所以这里显式 pipefail：go test 红了这条腿必须红。
     - name: Test (Expect Arrow Package)
-      run: go test -v $(go list ./... | grep -v './arrow')
+      shell: bash
+      run: |
+        set -o pipefail
+        go test -v $(go list ./... | grep -v './arrow') | tee /tmp/offline-test.log
+
+    # `go test` 在用例被整体过滤掉时仍然 rc=0（包级报告写 "[no tests to run]"，实测见 PR 评论），
+    # 所以“这条腿绿”不等于“用例跑了”。这一步把两件事钉住：没有报告要红，
+    # 以及 PASS 行数低于下限要红。下限取 300（当前实测 341 行 PASS、31 行 SKIP），
+    # 留出正常删改的余量，但用例大面积静默消失时一定拦下。
+    - name: Assert the offline cases actually ran
+      shell: bash
+      env:
+        MIN_PASSED_CASES: '300'
+      run: |
+        set -o pipefail
+        LOG=/tmp/offline-test.log
+        # 下限自己兜底并校验：env 丢了或写错时这一步要红，不能变成一个静默通过的比较。
+        MIN="${MIN_PASSED_CASES:-300}"
+        case "$MIN" in
+          ''|*[!0-9]*)
+            echo "::error::MIN_PASSED_CASES must be a positive integer, got \"$MIN\""
+            exit 1
+            ;;
+        esac
+        if [ ! -f "$LOG" ]; then
+          echo "::error::no test log at $LOG - the Test step did not produce a report"
+          exit 1
+        fi
+        if grep -q '\[no tests to run\]' "$LOG"; then
+          echo "::error::at least one package reported \"no tests to run\"; the gate would be green while executing nothing"
+          grep -n '\[no tests to run\]' "$LOG" | head -5
+          exit 1
+        fi
+        passed=$(grep -cE '^[[:space:]]*--- PASS' "$LOG")
+        skipped=$(grep -cE '^[[:space:]]*--- SKIP' "$LOG")
+        echo "executed cases (--- PASS lines): $passed (floor $MIN); skipped: $skipped"
+        if [ "$passed" -lt "$MIN" ]; then
+          echo "::error::only $passed cases reported PASS; the floor is $MIN"
+          exit 1
+        fi
 
   # 需要真实 MaxCompute 项目的用例：单独成 job，凭据取不到时页面必须有信号，
   # 而不是像以前那样在 get credentials 失败后把 Build/Test 全部 skipped。
