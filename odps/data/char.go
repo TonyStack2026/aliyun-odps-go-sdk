@@ -18,6 +18,7 @@ package data
 
 import (
 	"fmt"
+	"unicode/utf8"
 
 	"github.com/pkg/errors"
 
@@ -39,6 +40,9 @@ type VarChar struct {
 	data   string
 }
 
+// NewCharOverflowError builds the error reported when a value does not fit its
+// declared CHAR(n) / VARCHAR(n) width. Both arguments count characters (Unicode
+// code points), the unit MaxCompute uses for these types, not bytes.
 func NewCharOverflowError(maxLen, realLen int) CharOverflowError {
 	return CharOverflowError{maxLen, realLen}
 }
@@ -52,8 +56,10 @@ func NewChar(length int, data string) (*Char, error) {
 		return nil, errors.Errorf("max length of char is 255, not %d is given", length)
 	}
 
-	if len(data) > length {
-		return nil, errors.WithStack(NewCharOverflowError(length, len(data)))
+	// The width counts characters: 10 CJK characters are 30 UTF-8 bytes but still
+	// fit CHAR(10).
+	if charCount := utf8.RuneCountInString(data); charCount > length {
+		return nil, errors.WithStack(NewCharOverflowError(length, charCount))
 	}
 
 	return &Char{length: length, data: data}, nil
@@ -64,8 +70,10 @@ func MakeChar(length int, data string) (Char, error) {
 		return Char{}, errors.Errorf("max length of char is 255, not %d is given", length)
 	}
 
-	if len(data) > length {
-		return Char{}, errors.WithStack(NewCharOverflowError(length, len(data)))
+	// The width counts characters: 10 CJK characters are 30 UTF-8 bytes but still
+	// fit CHAR(10).
+	if charCount := utf8.RuneCountInString(data); charCount > length {
+		return Char{}, errors.WithStack(NewCharOverflowError(length, charCount))
 	}
 
 	return Char{length: length, data: data}, nil
@@ -96,8 +104,10 @@ func NewVarChar(length int, data string) (*VarChar, error) {
 		return nil, errors.Errorf("max length of char is 65536, not %d is given", length)
 	}
 
-	if len(data) > length {
-		return nil, errors.WithStack(NewCharOverflowError(length, len(data)))
+	// The width counts characters: 10 CJK characters are 30 UTF-8 bytes but still
+	// fit CHAR(10).
+	if charCount := utf8.RuneCountInString(data); charCount > length {
+		return nil, errors.WithStack(NewCharOverflowError(length, charCount))
 	}
 
 	return &VarChar{length: length, data: data}, nil
@@ -108,8 +118,10 @@ func MakeVarChar(length int, data string) (VarChar, error) {
 		return VarChar{}, errors.Errorf("max length of char is 65536, not %d is given", length)
 	}
 
-	if len(data) > length {
-		return VarChar{}, errors.WithStack(NewCharOverflowError(length, len(data)))
+	// The width counts characters: 10 CJK characters are 30 UTF-8 bytes but still
+	// fit CHAR(10).
+	if charCount := utf8.RuneCountInString(data); charCount > length {
+		return VarChar{}, errors.WithStack(NewCharOverflowError(length, charCount))
 	}
 
 	return VarChar{length: length, data: data}, nil

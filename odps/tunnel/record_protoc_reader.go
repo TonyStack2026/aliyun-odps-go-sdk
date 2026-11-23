@@ -236,7 +236,13 @@ func (r *RecordProtocReader) readField(dt datatype.DataType) (data.Data, error) 
 		}
 		r.recordCrc.Update(v)
 		t := dt.(datatype.VarcharType)
-		fieldValue, _ = data.MakeVarChar(t.Length, string(v))
+		// The error must not be dropped: a rejected value used to surface as an
+		// empty width 0 VARCHAR with a nil error, i.e. silent data loss.
+		varcharValue, err := data.MakeVarChar(t.Length, string(v))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		fieldValue = varcharValue
 	case datatype.CHAR:
 		v, err := r.protocReader.ReadBytes()
 		if err != nil {
@@ -244,7 +250,11 @@ func (r *RecordProtocReader) readField(dt datatype.DataType) (data.Data, error) 
 		}
 		r.recordCrc.Update(v)
 		t := dt.(datatype.CharType)
-		fieldValue, _ = data.MakeChar(t.Length, string(v))
+		charValue, err := data.MakeChar(t.Length, string(v))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		fieldValue = charValue
 	case datatype.BINARY:
 		v, err := r.protocReader.ReadBytes()
 		if err != nil {

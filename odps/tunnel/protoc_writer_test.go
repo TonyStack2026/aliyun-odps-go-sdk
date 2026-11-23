@@ -147,8 +147,17 @@ func TestEncodeProtocSimpleType(t *testing.T) {
 	}
 
 	pw := newRecordProtocWriter(bw, columns, false)
-	varchar, _ := data.NewVarChar(1000, "varchar")
-	char, _ := data.NewVarChar(100, "char")
+	// Column "c" is declared char(100), so it needs a data.Char: VarChar and Char
+	// encode the same byte payload, which used to let a VarChar pass unnoticed in
+	// the fixture and left the CHAR write path uncovered.
+	varchar, err := data.NewVarChar(1000, "varchar")
+	if err != nil {
+		t.Fatalf("NewVarChar: %v", err)
+	}
+	char, err := data.NewChar(100, "char")
+	if err != nil {
+		t.Fatalf("NewChar: %v", err)
+	}
 	s := data.String("alibaba")
 	date, _ := data.NewDate("2022-10-19")
 	datetime, _ := data.NewDateTime("2022-10-19 17:00:00")
@@ -181,7 +190,7 @@ func TestEncodeProtocSimpleType(t *testing.T) {
 		structData,
 	}
 
-	err := pw.Write(record)
+	err = pw.Write(record)
 	if err != nil {
 		t.Fatal(err)
 	}
